@@ -1,0 +1,63 @@
+stages:
+  - build
+  - pages
+  - deploy-github
+
+# Build a clean GitHub Pages-ready artifact
+build-github-pages:
+  stage: build
+  image: alpine:latest
+  script:
+    - mkdir -p github-pages
+    - cp index.html github-pages/
+    - cp -r css github-pages/
+    - cp -r js github-pages/
+    - cp -r img github-pages/
+  artifacts:
+    name: github-pages-${CI_COMMIT_SHORT_SHA}
+    paths:
+      - github-pages/
+    expire_in: 30 days
+
+# Deploy preview to GitLab Pages (automatic)
+pages:
+  stage: pages
+  script:
+    - mkdir -p public
+    - cp index.html public/
+    - cp -r css public/
+    - cp -r js public/
+    - cp -r img public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+
+# Push to GitHub Pages (manual approval required)
+deploy-to-github:
+  stage: deploy-github
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git openssh
+  script:
+    - mkdir -p ~/.ssh
+    - echo "$GITHUB_SSH_KEY" > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+    - git config --global user.email "jfenc91@gmail.com"
+    - git config --global user.name "Jeff Fenchel"
+    - git clone git@github.com:jfenc91/jfenc91.github.com.git gh-pages
+    - rm -rf gh-pages/*
+    - cp -r github-pages/* gh-pages/
+    - cd gh-pages
+    - git add -A
+    - git diff --cached --quiet && echo "No changes to deploy" && exit 0
+    - git commit -m "Deploy site from GitLab CI (${CI_COMMIT_SHORT_SHA})"
+    - git push origin master
+  dependencies:
+    - build-github-pages
+  only:
+    - main
+  when: manual
+  allow_failure: false
