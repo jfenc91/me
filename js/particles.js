@@ -8,7 +8,7 @@
 
   var canvas = document.createElement('canvas');
   canvas.id = 'particles';
-  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.5;';
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
   document.body.prepend(canvas);
 
   var gl = canvas.getContext('webgl', { alpha: true, antialias: false });
