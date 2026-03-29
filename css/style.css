@@ -332,6 +332,7 @@ a:hover {
 .adventure-card.tall {
   grid-row: span 2;
   aspect-ratio: auto;
+  background: #0d0d14;
 }
 
 .adventure-card img {
@@ -343,7 +344,7 @@ a:hover {
 }
 
 .adventure-card.tall img {
-  object-position: top;
+  object-fit: contain;
 }
 
 .adventure-card:hover img {
