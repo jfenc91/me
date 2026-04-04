@@ -757,39 +757,12 @@ body:has(.custom-cursor) .tech-tags span {
 }
 
 /* --- Hero Text Split Animation --- */
-.hero-text-reveal {
-  overflow: hidden;
-}
-
-.hero-char {
+.hero-text-reveal .hero-char {
   display: inline-block;
-  animation: charReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes charReveal {
-  from { transform: translateY(110%); }
-  to { transform: translateY(0); }
-}
-
-.hero-name .hero-char {
   color: #fff;
 }
 
-/* --- Hero Tagline Reveal --- */
-.hero-tagline-reveal {
-  animation: taglineReveal 1s cubic-bezier(0.16, 1, 0.3, 1) both 1s;
-}
-
-@keyframes taglineReveal {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* (tagline animation handled in JS) */
 
 /* --- Section Title Reveal --- */
 

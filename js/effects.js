@@ -85,15 +85,37 @@
       var span = document.createElement('span');
       span.className = 'hero-char';
       span.textContent = text[i] === ' ' ? '\u00A0' : text[i];
-      span.style.animationDelay = (0.05 * i + 0.3) + 's';
       heroName.appendChild(span);
     }
+    // Animate each char with a stagger (purely visual enhancement)
+    var chars = heroName.querySelectorAll('.hero-char');
+    chars.forEach(function(ch, idx) {
+      ch.style.opacity = '0';
+      ch.style.transform = 'translateY(40px)';
+      ch.style.transition = 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+      ch.style.transitionDelay = (idx * 0.04 + 0.2) + 's';
+    });
+    // Trigger the transition on next frame
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        chars.forEach(function(ch) {
+          ch.style.opacity = '1';
+          ch.style.transform = 'translateY(0)';
+        });
+      });
+    });
   }
 
   // --- Hero Tagline Fade ---
   var heroTagline = document.querySelector('.hero-tagline');
   if (heroTagline) {
-    heroTagline.classList.add('hero-tagline-reveal');
+    heroTagline.style.opacity = '0';
+    heroTagline.style.transform = 'translateY(15px)';
+    heroTagline.style.transition = 'opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+    setTimeout(function() {
+      heroTagline.style.opacity = '1';
+      heroTagline.style.transform = 'translateY(0)';
+    }, 800);
   }
 
   // --- Magnetic Buttons ---
