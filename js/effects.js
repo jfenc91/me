@@ -81,13 +81,19 @@
     var text = heroName.textContent;
     heroName.innerHTML = '';
     heroName.classList.add('hero-text-reveal');
+    var lastDelay = 0;
     for (var i = 0; i < text.length; i++) {
       var span = document.createElement('span');
       span.className = 'hero-char';
       span.textContent = text[i] === ' ' ? '\u00A0' : text[i];
-      span.style.animationDelay = (0.05 * i + 0.3) + 's';
+      lastDelay = 0.05 * i + 0.3;
+      span.style.animationDelay = lastDelay + 's';
       heroName.appendChild(span);
     }
+    // After all chars have animated in, add shimmer gradient
+    setTimeout(function() {
+      heroName.classList.add('shimmer-ready');
+    }, (lastDelay + 0.8) * 1000);
   }
 
   // --- Hero Tagline Fade ---
@@ -116,21 +122,7 @@
     });
   }
 
-  // --- Section Title Reveal (clip-path wipe) ---
-  var sectionTitles = document.querySelectorAll('.section-title');
-  var titleObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('title-visible');
-        titleObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.3 });
-
-  sectionTitles.forEach(function(title) {
-    title.classList.add('title-reveal');
-    titleObserver.observe(title);
-  });
+  // (title reveal removed)
 
   // --- Skill card tilt on hover ---
   if (!isTouch) {

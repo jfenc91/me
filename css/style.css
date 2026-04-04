@@ -777,7 +777,11 @@ body:has(.custom-cursor) .tech-tags span {
 }
 
 /* --- Hero Name Gradient Shimmer --- */
-.hero-name {
+.hero-name .hero-char {
+  color: #fff;
+}
+
+.hero-name.shimmer-ready {
   background: linear-gradient(
     120deg,
     #fff 0%,
@@ -787,16 +791,16 @@ body:has(.custom-cursor) .tech-tags span {
     #fff 60%,
     #fff 100%
   );
-  background-size: 200% 100%;
+  background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: shimmer 6s ease-in-out infinite 2s;
+  animation: shimmer 6s ease-in-out infinite;
 }
 
 @keyframes shimmer {
-  0%, 100% { background-position: 200% center; }
-  50% { background-position: -200% center; }
+  0%, 100% { background-position: 100% center; }
+  50% { background-position: 0% center; }
 }
 
 /* --- Hero Tagline Reveal --- */
@@ -813,15 +817,7 @@ body:has(.custom-cursor) .tech-tags span {
   }
 }
 
-/* --- Section Title Clip Reveal --- */
-.title-reveal {
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.title-reveal.title-visible {
-  clip-path: inset(0 0% 0 0);
-}
+/* --- Section Title Reveal --- */
 
 /* --- Enhanced Card Reveal (clip-path slide) --- */
 .adventure-card.fade-up {
@@ -844,20 +840,7 @@ body:has(.custom-cursor) .tech-tags span {
   transform-style: preserve-3d;
 }
 
-/* --- Glow line under section labels --- */
-.section-label::after {
-  content: '';
-  display: block;
-  width: 40px;
-  height: 2px;
-  background: linear-gradient(90deg, var(--color-accent), transparent);
-  margin-top: 0.5rem;
-}
-
-.section-label.center::after {
-  margin-left: auto;
-  margin-right: auto;
-}
+/* (removed section label lines) */
 
 /* --- Parallax quote entrance --- */
 .parallax-text blockquote {
