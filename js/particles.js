@@ -1,7 +1,7 @@
 /* ========================================
-   WebGL Particle Network
-   Connected nodes with glowing lines,
-   mouse interaction, and color shifts
+   WebGL Starfield
+   Twinkling stars with gentle drift,
+   mouse parallax, and shooting stars
    ======================================== */
 
 (function() {
@@ -15,65 +15,97 @@
   var gl = canvas.getContext('webgl', { alpha: true, antialias: true });
   if (!gl) return;
 
-  var NUM = 80;
-  var CONNECT_DIST = 0.15;
-  var mouse = { x: -1, y: -1 };
+  var NUM_STARS = 200;
+  var NUM_SHOOTERS = 3;
+  var mouse = { x: 0.5, y: 0.5 };
 
   window.addEventListener('mousemove', function(e) {
     mouse.x = e.clientX / window.innerWidth;
     mouse.y = e.clientY / window.innerHeight;
   }, { passive: true });
 
-  // --- Particle state (CPU-side for connections) ---
-  var particles = [];
-  for (var i = 0; i < NUM; i++) {
-    particles.push({
+  // --- Star state ---
+  var stars = [];
+  for (var i = 0; i < NUM_STARS; i++) {
+    stars.push({
       x: Math.random(),
       y: Math.random(),
-      vx: (Math.random() - 0.5) * 0.0008,
-      vy: (Math.random() - 0.5) * 0.0008,
-      size: 2 + Math.random() * 3,
-      pulse: Math.random() * Math.PI * 2
+      size: 0.5 + Math.random() * 2.5,
+      twinkleSpeed: 0.5 + Math.random() * 2.0,
+      twinklePhase: Math.random() * Math.PI * 2,
+      brightness: 0.3 + Math.random() * 0.7,
+      // Color temperature: cool white to warm white
+      temp: Math.random()
     });
   }
 
-  // --- Point shader ---
-  var pVS = [
+  // --- Shooting stars ---
+  var shooters = [];
+  for (var s = 0; s < NUM_SHOOTERS; s++) {
+    shooters.push({
+      x: 0, y: 0, vx: 0, vy: 0,
+      life: 0, maxLife: 0, active: false,
+      tailLen: 0
+    });
+  }
+
+  function spawnShooter(sh) {
+    sh.x = Math.random() * 0.8 + 0.1;
+    sh.y = Math.random() * 0.3;
+    var angle = Math.PI * 0.15 + Math.random() * Math.PI * 0.2;
+    var speed = 0.008 + Math.random() * 0.006;
+    sh.vx = Math.cos(angle) * speed;
+    sh.vy = Math.sin(angle) * speed;
+    sh.life = 0;
+    sh.maxLife = 40 + Math.random() * 40;
+    sh.active = true;
+    sh.tailLen = 0.03 + Math.random() * 0.04;
+  }
+
+  // --- Star shader ---
+  var starVS = [
     'attribute vec2 a_pos;',
     'attribute float a_size;',
-    'attribute float a_pulse;',
+    'attribute float a_brightness;',
+    'attribute float a_temp;',
     'uniform float u_time;',
     'uniform vec2 u_res;',
-    'varying float v_pulse;',
+    'uniform vec2 u_mouse;',
+    'varying float v_bright;',
+    'varying float v_temp;',
     'void main() {',
-    '  gl_Position = vec4(a_pos * 2.0 - 1.0, 0.0, 1.0);',
+    '  // Subtle parallax from mouse',
+    '  vec2 offset = (u_mouse - 0.5) * a_size * 0.003;',
+    '  vec2 pos = a_pos + offset;',
+    '  gl_Position = vec4(pos * 2.0 - 1.0, 0.0, 1.0);',
     '  gl_Position.y *= -1.0;',
-    '  float p = sin(u_time * 2.0 + a_pulse * 6.28) * 0.5 + 0.5;',
-    '  gl_PointSize = (a_size + p * 3.0) * min(u_res.x, u_res.y) / 900.0;',
-    '  v_pulse = p;',
+    '  gl_PointSize = a_size * min(u_res.x, u_res.y) / 800.0;',
+    '  v_bright = a_brightness;',
+    '  v_temp = a_temp;',
     '}'
   ].join('\n');
 
-  var pFS = [
+  var starFS = [
     'precision mediump float;',
-    'varying float v_pulse;',
-    'uniform float u_time;',
+    'varying float v_bright;',
+    'varying float v_temp;',
     'void main() {',
     '  float d = length(gl_PointCoord - vec2(0.5));',
     '  if (d > 0.5) discard;',
-    '  float core = smoothstep(0.5, 0.05, d);',
-    '  float glow = smoothstep(0.5, 0.0, d);',
-    '  float r = 0.3 + 0.2 * sin(u_time * 0.7);',
-    '  float g = 0.5 + 0.3 * v_pulse;',
-    '  float b = 0.9 + 0.1 * cos(u_time * 0.5);',
-    '  vec3 col = vec3(r, g, b) * core + vec3(0.2, 0.4, 1.0) * glow * 0.5;',
-    '  float alpha = glow * (0.6 + 0.4 * v_pulse);',
-    '  gl_FragColor = vec4(col, alpha);',
+    '  // Sharp core with soft glow',
+    '  float core = smoothstep(0.5, 0.08, d);',
+    '  float glow = smoothstep(0.5, 0.0, d) * 0.4;',
+    '  float intensity = (core + glow) * v_bright;',
+    '  // Color: cool white to warm yellow based on temperature',
+    '  vec3 cool = vec3(0.8, 0.85, 1.0);',
+    '  vec3 warm = vec3(1.0, 0.9, 0.7);',
+    '  vec3 col = mix(cool, warm, v_temp);',
+    '  gl_FragColor = vec4(col * intensity, intensity);',
     '}'
   ].join('\n');
 
-  // --- Line shader ---
-  var lVS = [
+  // --- Shooting star shader (lines) ---
+  var shootVS = [
     'attribute vec2 a_pos;',
     'attribute float a_alpha;',
     'varying float v_alpha;',
@@ -84,15 +116,11 @@
     '}'
   ].join('\n');
 
-  var lFS = [
+  var shootFS = [
     'precision mediump float;',
     'varying float v_alpha;',
-    'uniform float u_time;',
     'void main() {',
-    '  float r = 0.3 + 0.15 * sin(u_time * 0.7);',
-    '  float g = 0.5 + 0.2 * sin(u_time * 0.3);',
-    '  float b = 1.0;',
-    '  gl_FragColor = vec4(r, g, b, v_alpha * 0.35);',
+    '  gl_FragColor = vec4(0.9, 0.95, 1.0, v_alpha);',
     '}'
   ].join('\n');
 
@@ -111,12 +139,11 @@
     return p;
   }
 
-  var pointProg = makeProgram(pVS, pFS);
-  var lineProg = makeProgram(lVS, lFS);
+  var starProg = makeProgram(starVS, starFS);
+  var shootProg = makeProgram(shootVS, shootFS);
 
-  // Buffers
-  var pointBuf = gl.createBuffer();
-  var lineBuf = gl.createBuffer();
+  var starBuf = gl.createBuffer();
+  var shootBuf = gl.createBuffer();
 
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -129,131 +156,110 @@
   window.addEventListener('resize', resize);
   resize();
 
-  // Reusable arrays
-  var pointData = new Float32Array(NUM * 4);
-  var lineData = new Float32Array(NUM * NUM * 3 * 2); // worst case
+  // stride: x, y, size, brightness, temp = 5 floats
+  var starData = new Float32Array(NUM_STARS * 5);
+  // Shooting star trail segments
+  var shootData = new Float32Array(NUM_SHOOTERS * 6); // 2 verts * 3 floats each
+
+  var lastShoot = 0;
 
   function draw(t) {
     var time = t * 0.001;
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    var aspect = canvas.width / canvas.height;
+    // Update star twinkle
+    for (var i = 0; i < NUM_STARS; i++) {
+      var star = stars[i];
+      var twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase);
+      var brightness = star.brightness * (0.5 + 0.5 * twinkle);
 
-    // Update particles
-    for (var i = 0; i < NUM; i++) {
-      var p = particles[i];
-
-      // Mouse attraction
-      if (mouse.x >= 0) {
-        var dx = mouse.x - p.x;
-        var dy = mouse.y - p.y;
-        var dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 0.25 && dist > 0.01) {
-          var force = 0.00015 / dist;
-          p.vx += dx * force;
-          p.vy += dy * force;
-        }
-      }
-
-      p.x += p.vx;
-      p.y += p.vy;
-
-      // Damping
-      p.vx *= 0.998;
-      p.vy *= 0.998;
-
-      // Wrap
-      if (p.x < -0.05) p.x = 1.05;
-      if (p.x > 1.05) p.x = -0.05;
-      if (p.y < -0.05) p.y = 1.05;
-      if (p.y > 1.05) p.y = -0.05;
-
-      var j = i * 4;
-      pointData[j] = p.x;
-      pointData[j+1] = p.y;
-      pointData[j+2] = p.size;
-      pointData[j+3] = p.pulse;
+      var j = i * 5;
+      starData[j] = star.x;
+      starData[j+1] = star.y;
+      starData[j+2] = star.size;
+      starData[j+3] = brightness;
+      starData[j+4] = star.temp;
     }
 
-    // Draw lines
-    var lineCount = 0;
-    for (var a = 0; a < NUM; a++) {
-      for (var b = a + 1; b < NUM; b++) {
-        var pa = particles[a], pb = particles[b];
-        var ddx = (pa.x - pb.x) * aspect;
-        var ddy = pa.y - pb.y;
-        var d = Math.sqrt(ddx * ddx + ddy * ddy);
-        if (d < CONNECT_DIST) {
-          var alpha = 1.0 - d / CONNECT_DIST;
-          alpha = alpha * alpha; // quadratic falloff
-          var li = lineCount * 6;
-          lineData[li] = pa.x;
-          lineData[li+1] = pa.y;
-          lineData[li+2] = alpha;
-          lineData[li+3] = pb.x;
-          lineData[li+4] = pb.y;
-          lineData[li+5] = alpha;
-          lineCount++;
-        }
-      }
-    }
+    // Draw stars
+    gl.useProgram(starProg);
+    gl.bindBuffer(gl.ARRAY_BUFFER, starBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, starData, gl.DYNAMIC_DRAW);
 
-    // Also connect to mouse
-    if (mouse.x >= 0) {
-      for (var m = 0; m < NUM; m++) {
-        var pm = particles[m];
-        var mdx = (pm.x - mouse.x) * aspect;
-        var mdy = pm.y - mouse.y;
-        var md = Math.sqrt(mdx * mdx + mdy * mdy);
-        if (md < 0.2) {
-          var ma = (1.0 - md / 0.2);
-          ma = ma * ma * 1.5;
-          var mi = lineCount * 6;
-          lineData[mi] = pm.x;
-          lineData[mi+1] = pm.y;
-          lineData[mi+2] = ma;
-          lineData[mi+3] = mouse.x;
-          lineData[mi+4] = mouse.y;
-          lineData[mi+5] = ma;
-          lineCount++;
-        }
-      }
-    }
-
-    if (lineCount > 0) {
-      gl.useProgram(lineProg);
-      gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf);
-      gl.bufferData(gl.ARRAY_BUFFER, lineData.subarray(0, lineCount * 6), gl.DYNAMIC_DRAW);
-
-      var lPos = gl.getAttribLocation(lineProg, 'a_pos');
-      var lAlpha = gl.getAttribLocation(lineProg, 'a_alpha');
-      gl.enableVertexAttribArray(lPos);
-      gl.enableVertexAttribArray(lAlpha);
-      gl.vertexAttribPointer(lPos, 2, gl.FLOAT, false, 12, 0);
-      gl.vertexAttribPointer(lAlpha, 1, gl.FLOAT, false, 12, 8);
-      gl.uniform1f(gl.getUniformLocation(lineProg, 'u_time'), time);
-      gl.drawArrays(gl.LINES, 0, lineCount * 2);
-      gl.disableVertexAttribArray(lAlpha);
-    }
-
-    // Draw points
-    gl.useProgram(pointProg);
-    gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, pointData, gl.DYNAMIC_DRAW);
-
-    var aPos = gl.getAttribLocation(pointProg, 'a_pos');
-    var aSize = gl.getAttribLocation(pointProg, 'a_size');
-    var aPulse = gl.getAttribLocation(pointProg, 'a_pulse');
+    var aPos = gl.getAttribLocation(starProg, 'a_pos');
+    var aSize = gl.getAttribLocation(starProg, 'a_size');
+    var aBright = gl.getAttribLocation(starProg, 'a_brightness');
+    var aTemp = gl.getAttribLocation(starProg, 'a_temp');
     gl.enableVertexAttribArray(aPos);
     gl.enableVertexAttribArray(aSize);
-    gl.enableVertexAttribArray(aPulse);
-    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 16, 0);
-    gl.vertexAttribPointer(aSize, 1, gl.FLOAT, false, 16, 8);
-    gl.vertexAttribPointer(aPulse, 1, gl.FLOAT, false, 16, 12);
-    gl.uniform1f(gl.getUniformLocation(pointProg, 'u_time'), time);
-    gl.uniform2f(gl.getUniformLocation(pointProg, 'u_res'), canvas.width, canvas.height);
-    gl.drawArrays(gl.POINTS, 0, NUM);
+    gl.enableVertexAttribArray(aBright);
+    gl.enableVertexAttribArray(aTemp);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 20, 0);
+    gl.vertexAttribPointer(aSize, 1, gl.FLOAT, false, 20, 8);
+    gl.vertexAttribPointer(aBright, 1, gl.FLOAT, false, 20, 12);
+    gl.vertexAttribPointer(aTemp, 1, gl.FLOAT, false, 20, 16);
+    gl.uniform1f(gl.getUniformLocation(starProg, 'u_time'), time);
+    gl.uniform2f(gl.getUniformLocation(starProg, 'u_res'), canvas.width, canvas.height);
+    gl.uniform2f(gl.getUniformLocation(starProg, 'u_mouse'), mouse.x, mouse.y);
+    gl.drawArrays(gl.POINTS, 0, NUM_STARS);
+    gl.disableVertexAttribArray(aTemp);
+
+    // Shooting stars
+    if (time - lastShoot > 3 + Math.random() * 5) {
+      for (var si = 0; si < NUM_SHOOTERS; si++) {
+        if (!shooters[si].active) {
+          spawnShooter(shooters[si]);
+          lastShoot = time;
+          break;
+        }
+      }
+    }
+
+    var shootCount = 0;
+    for (var k = 0; k < NUM_SHOOTERS; k++) {
+      var sh = shooters[k];
+      if (!sh.active) continue;
+
+      sh.life++;
+      if (sh.life > sh.maxLife) {
+        sh.active = false;
+        continue;
+      }
+
+      var progress = sh.life / sh.maxLife;
+      var alpha = progress < 0.1 ? progress / 0.1 : (1.0 - progress);
+      alpha = Math.max(0, alpha * 0.8);
+
+      var headX = sh.x + sh.vx * sh.life;
+      var headY = sh.y + sh.vy * sh.life;
+      var tailX = headX - sh.vx * sh.tailLen / 0.01;
+      var tailY = headY - sh.vy * sh.tailLen / 0.01;
+
+      var idx = shootCount * 6;
+      shootData[idx] = tailX;
+      shootData[idx+1] = tailY;
+      shootData[idx+2] = 0;
+      shootData[idx+3] = headX;
+      shootData[idx+4] = headY;
+      shootData[idx+5] = alpha;
+      shootCount++;
+    }
+
+    if (shootCount > 0) {
+      gl.useProgram(shootProg);
+      gl.bindBuffer(gl.ARRAY_BUFFER, shootBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, shootData.subarray(0, shootCount * 6), gl.DYNAMIC_DRAW);
+
+      var sPos = gl.getAttribLocation(shootProg, 'a_pos');
+      var sAlpha = gl.getAttribLocation(shootProg, 'a_alpha');
+      gl.enableVertexAttribArray(sPos);
+      gl.enableVertexAttribArray(sAlpha);
+      gl.vertexAttribPointer(sPos, 2, gl.FLOAT, false, 12, 0);
+      gl.vertexAttribPointer(sAlpha, 1, gl.FLOAT, false, 12, 8);
+      gl.drawArrays(gl.LINES, 0, shootCount * 2);
+      gl.disableVertexAttribArray(sAlpha);
+    }
 
     requestAnimationFrame(draw);
   }
