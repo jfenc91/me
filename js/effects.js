@@ -81,19 +81,13 @@
     var text = heroName.textContent;
     heroName.innerHTML = '';
     heroName.classList.add('hero-text-reveal');
-    var lastDelay = 0;
     for (var i = 0; i < text.length; i++) {
       var span = document.createElement('span');
       span.className = 'hero-char';
       span.textContent = text[i] === ' ' ? '\u00A0' : text[i];
-      lastDelay = 0.05 * i + 0.3;
-      span.style.animationDelay = lastDelay + 's';
+      span.style.animationDelay = (0.05 * i + 0.3) + 's';
       heroName.appendChild(span);
     }
-    // After all chars have animated in, add shimmer gradient
-    setTimeout(function() {
-      heroName.classList.add('shimmer-ready');
-    }, (lastDelay + 0.8) * 1000);
   }
 
   // --- Hero Tagline Fade ---
