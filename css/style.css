@@ -763,18 +763,19 @@ body:has(.custom-cursor) .tech-tags span {
 
 .hero-char {
   display: inline-block;
-  animation: charReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  opacity: 1;
+  animation: charReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: bottom center;
 }
 
 @keyframes charReveal {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(80%) rotateX(-60deg);
+    transform: translateY(60%);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0) rotateX(0);
+    transform: translateY(0);
   }
 }
 
