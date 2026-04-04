@@ -7,61 +7,7 @@
 (function() {
   'use strict';
 
-  // Skip custom cursor on touch devices
   var isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-  // --- Custom Cursor ---
-  if (!isTouch) {
-    var cursor = document.createElement('div');
-    cursor.className = 'custom-cursor';
-    var cursorDot = document.createElement('div');
-    cursorDot.className = 'custom-cursor-dot';
-    document.body.appendChild(cursor);
-    document.body.appendChild(cursorDot);
-
-    var cursorX = 0, cursorY = 0;
-    var dotX = 0, dotY = 0;
-    var cursorVisible = false;
-
-    document.addEventListener('mousemove', function(e) {
-      cursorX = e.clientX;
-      cursorY = e.clientY;
-      cursorDot.style.transform = 'translate(' + cursorX + 'px, ' + cursorY + 'px)';
-      if (!cursorVisible) {
-        cursor.style.opacity = '1';
-        cursorDot.style.opacity = '1';
-        cursorVisible = true;
-      }
-    });
-
-    document.addEventListener('mouseleave', function() {
-      cursor.style.opacity = '0';
-      cursorDot.style.opacity = '0';
-      cursorVisible = false;
-    });
-
-    // Smooth follow for outer ring
-    function animateCursor() {
-      dotX += (cursorX - dotX) * 0.15;
-      dotY += (cursorY - dotY) * 0.15;
-      cursor.style.transform = 'translate(' + dotX + 'px, ' + dotY + 'px)';
-      requestAnimationFrame(animateCursor);
-    }
-    animateCursor();
-
-    // Expand cursor on interactive elements
-    var interactives = 'a, button, .adventure-card, .skill-card, .contact-btn, .tech-tags span, .nav-toggle';
-    document.addEventListener('mouseover', function(e) {
-      if (e.target.closest(interactives)) {
-        cursor.classList.add('cursor-hover');
-      }
-    });
-    document.addEventListener('mouseout', function(e) {
-      if (e.target.closest(interactives)) {
-        cursor.classList.remove('cursor-hover');
-      }
-    });
-  }
 
   // --- Scroll Progress Bar ---
   var progressBar = document.createElement('div');

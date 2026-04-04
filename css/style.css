@@ -688,62 +688,7 @@ footer p {
   }
 }
 
-/* --- Custom Cursor --- */
-.custom-cursor {
-  position: fixed;
-  top: -20px;
-  left: -20px;
-  width: 40px;
-  height: 40px;
-  border: 1.5px solid rgba(74, 158, 255, 0.4);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0;
-  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.3s,
-              border-color 0.3s,
-              background 0.3s;
-  will-change: transform;
-  mix-blend-mode: difference;
-}
-
-.custom-cursor-dot {
-  position: fixed;
-  top: -4px;
-  left: -4px;
-  width: 8px;
-  height: 8px;
-  background: var(--color-accent);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 10000;
-  opacity: 0;
-  transition: opacity 0.3s;
-  will-change: transform;
-}
-
-.custom-cursor.cursor-hover {
-  width: 60px;
-  height: 60px;
-  top: -30px;
-  left: -30px;
-  border-color: rgba(74, 158, 255, 0.6);
-  background: rgba(74, 158, 255, 0.06);
-}
-
-body:has(.custom-cursor) {
-  cursor: none;
-}
-
-body:has(.custom-cursor) a,
-body:has(.custom-cursor) button,
-body:has(.custom-cursor) .adventure-card,
-body:has(.custom-cursor) .skill-card,
-body:has(.custom-cursor) .tech-tags span {
-  cursor: none;
-}
+/* (custom cursor removed) */
 
 /* --- Scroll Progress Bar --- */
 .scroll-progress {
