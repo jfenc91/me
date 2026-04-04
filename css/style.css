@@ -180,8 +180,7 @@ a:hover {
   letter-spacing: -0.02em;
   line-height: 1.1;
   margin-bottom: 1rem;
-  color: #fff;
-  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.5);
+  filter: drop-shadow(0 2px 40px rgba(0, 0, 0, 0.5));
 }
 
 .hero-tagline {
@@ -687,3 +686,217 @@ footer p {
     font-size: clamp(2.5rem, 12vw, 4rem);
   }
 }
+
+/* --- Custom Cursor --- */
+.custom-cursor {
+  position: fixed;
+  top: -20px;
+  left: -20px;
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid rgba(74, 158, 255, 0.4);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s,
+              border-color 0.3s,
+              background 0.3s;
+  will-change: transform;
+  mix-blend-mode: difference;
+}
+
+.custom-cursor-dot {
+  position: fixed;
+  top: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.3s;
+  will-change: transform;
+}
+
+.custom-cursor.cursor-hover {
+  width: 60px;
+  height: 60px;
+  top: -30px;
+  left: -30px;
+  border-color: rgba(74, 158, 255, 0.6);
+  background: rgba(74, 158, 255, 0.06);
+}
+
+body:has(.custom-cursor) {
+  cursor: none;
+}
+
+body:has(.custom-cursor) a,
+body:has(.custom-cursor) button,
+body:has(.custom-cursor) .adventure-card,
+body:has(.custom-cursor) .skill-card,
+body:has(.custom-cursor) .tech-tags span {
+  cursor: none;
+}
+
+/* --- Scroll Progress Bar --- */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--color-accent), #a855f7, var(--color-warm));
+  z-index: 10001;
+  transition: width 0.05s linear;
+}
+
+/* --- Hero Text Split Animation --- */
+.hero-text-reveal {
+  overflow: hidden;
+}
+
+.hero-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%) rotateX(-80deg);
+  animation: charReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: bottom center;
+}
+
+@keyframes charReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+  }
+}
+
+/* --- Hero Name Gradient Shimmer --- */
+.hero-name {
+  background: linear-gradient(
+    120deg,
+    #fff 0%,
+    #fff 40%,
+    var(--color-accent) 50%,
+    #a855f7 55%,
+    #fff 60%,
+    #fff 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 6s ease-in-out infinite 2s;
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: 200% center; }
+  50% { background-position: -200% center; }
+}
+
+/* --- Hero Tagline Reveal --- */
+.hero-tagline-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: taglineReveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards 1s;
+}
+
+@keyframes taglineReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Section Title Clip Reveal --- */
+.title-reveal {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.title-reveal.title-visible {
+  clip-path: inset(0 0% 0 0);
+}
+
+/* --- Enhanced Card Reveal (clip-path slide) --- */
+.adventure-card.fade-up {
+  opacity: 0;
+  clip-path: inset(10% 10% 10% 10%);
+  transform: translateY(0);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              clip-path 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.adventure-card.fade-up.visible {
+  opacity: 1;
+  clip-path: inset(0% 0% 0% 0%);
+}
+
+/* --- Skill Card 3D Tilt --- */
+.skill-card {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.15s ease-out;
+  transform-style: preserve-3d;
+}
+
+/* --- Glow line under section labels --- */
+.section-label::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-accent), transparent);
+  margin-top: 0.5rem;
+}
+
+.section-label.center::after {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --- Parallax quote entrance --- */
+.parallax-text blockquote {
+  background: linear-gradient(90deg, rgba(255,255,255,0.9), var(--color-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* --- Tech tag stagger animation --- */
+.tech-tags span {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.tech-stack.visible .tech-tags span {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s, transform 0.4s;
+}
+
+.tech-stack.visible .tech-tags span:nth-child(1) { transition-delay: 0.02s; }
+.tech-stack.visible .tech-tags span:nth-child(2) { transition-delay: 0.04s; }
+.tech-stack.visible .tech-tags span:nth-child(3) { transition-delay: 0.06s; }
+.tech-stack.visible .tech-tags span:nth-child(4) { transition-delay: 0.08s; }
+.tech-stack.visible .tech-tags span:nth-child(5) { transition-delay: 0.10s; }
+.tech-stack.visible .tech-tags span:nth-child(6) { transition-delay: 0.12s; }
+.tech-stack.visible .tech-tags span:nth-child(7) { transition-delay: 0.14s; }
+.tech-stack.visible .tech-tags span:nth-child(8) { transition-delay: 0.16s; }
+.tech-stack.visible .tech-tags span:nth-child(9) { transition-delay: 0.18s; }
+.tech-stack.visible .tech-tags span:nth-child(10) { transition-delay: 0.20s; }
+.tech-stack.visible .tech-tags span:nth-child(11) { transition-delay: 0.22s; }
+.tech-stack.visible .tech-tags span:nth-child(12) { transition-delay: 0.24s; }
+.tech-stack.visible .tech-tags span:nth-child(13) { transition-delay: 0.26s; }
+.tech-stack.visible .tech-tags span:nth-child(14) { transition-delay: 0.28s; }
+.tech-stack.visible .tech-tags span:nth-child(15) { transition-delay: 0.30s; }
+.tech-stack.visible .tech-tags span:nth-child(16) { transition-delay: 0.32s; }
+.tech-stack.visible .tech-tags span:nth-child(17) { transition-delay: 0.34s; }
+.tech-stack.visible .tech-tags span:nth-child(18) { transition-delay: 0.36s; }
+.tech-stack.visible .tech-tags span:nth-child(19) { transition-delay: 0.38s; }
+.tech-stack.visible .tech-tags span:nth-child(20) { transition-delay: 0.40s; }
+.tech-stack.visible .tech-tags span:nth-child(21) { transition-delay: 0.42s; }
