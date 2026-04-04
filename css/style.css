@@ -353,6 +353,7 @@ a:hover {
 .card-overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
   background: linear-gradient(
     0deg,
     rgba(0, 0, 0, 0.75) 0%,

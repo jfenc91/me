@@ -17,7 +17,7 @@
 
   var NUM_STARS = 200;
   var NUM_SHOOTERS = 3;
-  var mouse = { x: 0.5, y: 0.5 };
+  var mouse = { x: 0.5, y: 0.5, sx: 0.5, sy: 0.5 }; // sx/sy = smoothed
 
   window.addEventListener('mousemove', function(e) {
     mouse.x = e.clientX / window.innerWidth;
@@ -30,13 +30,17 @@
     stars.push({
       x: Math.random(),
       y: Math.random(),
+      baseX: 0, baseY: 0, // set below
+      dx: 0, dy: 0, // current displacement from mouse
       size: 0.5 + Math.random() * 2.5,
       twinkleSpeed: 0.5 + Math.random() * 2.0,
       twinklePhase: Math.random() * Math.PI * 2,
       brightness: 0.3 + Math.random() * 0.7,
-      // Color temperature: cool white to warm white
-      temp: Math.random()
+      temp: Math.random(),
+      depth: Math.random() // 0=far, 1=near (for parallax strength)
     });
+    stars[i].baseX = stars[i].x;
+    stars[i].baseY = stars[i].y;
   }
 
   // --- Shooting stars ---
@@ -73,13 +77,22 @@
     'uniform vec2 u_mouse;',
     'varying float v_bright;',
     'varying float v_temp;',
+    'varying float v_mouseDist;',
     'void main() {',
-    '  // Subtle parallax from mouse',
-    '  vec2 offset = (u_mouse - 0.5) * a_size * 0.003;',
-    '  vec2 pos = a_pos + offset;',
-    '  gl_Position = vec4(pos * 2.0 - 1.0, 0.0, 1.0);',
+    '  gl_Position = vec4(a_pos * 2.0 - 1.0, 0.0, 1.0);',
     '  gl_Position.y *= -1.0;',
-    '  gl_PointSize = a_size * min(u_res.x, u_res.y) / 800.0;',
+    '  // Distance to mouse for proximity glow',
+    '  vec2 mpos = u_mouse * 2.0 - 1.0;',
+    '  mpos.y *= -1.0;',
+    '  float aspect = u_res.x / u_res.y;',
+    '  vec2 diff = gl_Position.xy - mpos;',
+    '  diff.x *= aspect;',
+    '  float md = length(diff);',
+    '  v_mouseDist = md;',
+    '  // Stars near mouse grow bigger',
+    '  float proximity = smoothstep(0.5, 0.0, md);',
+    '  float finalSize = a_size + proximity * 3.0;',
+    '  gl_PointSize = finalSize * min(u_res.x, u_res.y) / 800.0;',
     '  v_bright = a_brightness;',
     '  v_temp = a_temp;',
     '}'
@@ -89,17 +102,22 @@
     'precision mediump float;',
     'varying float v_bright;',
     'varying float v_temp;',
+    'varying float v_mouseDist;',
     'void main() {',
     '  float d = length(gl_PointCoord - vec2(0.5));',
     '  if (d > 0.5) discard;',
-    '  // Sharp core with soft glow',
     '  float core = smoothstep(0.5, 0.08, d);',
     '  float glow = smoothstep(0.5, 0.0, d) * 0.4;',
-    '  float intensity = (core + glow) * v_bright;',
-    '  // Color: cool white to warm yellow based on temperature',
+    '  // Brighten near mouse',
+    '  float proximity = smoothstep(0.5, 0.0, v_mouseDist);',
+    '  float boost = 1.0 + proximity * 1.5;',
+    '  float intensity = (core + glow) * v_bright * boost;',
+    '  // Near mouse: shift toward accent blue',
     '  vec3 cool = vec3(0.8, 0.85, 1.0);',
     '  vec3 warm = vec3(1.0, 0.9, 0.7);',
-    '  vec3 col = mix(cool, warm, v_temp);',
+    '  vec3 accent = vec3(0.29, 0.62, 1.0);',
+    '  vec3 baseCol = mix(cool, warm, v_temp);',
+    '  vec3 col = mix(baseCol, accent, proximity * 0.6);',
     '  gl_FragColor = vec4(col * intensity, intensity);',
     '}'
   ].join('\n');
@@ -168,11 +186,41 @@
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // Update star twinkle
+    // Smooth mouse
+    mouse.sx += (mouse.x - mouse.sx) * 0.08;
+    mouse.sy += (mouse.y - mouse.sy) * 0.08;
+
+    var aspect = canvas.width / canvas.height;
+
+    // Update stars
     for (var i = 0; i < NUM_STARS; i++) {
       var star = stars[i];
       var twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase);
       var brightness = star.brightness * (0.5 + 0.5 * twinkle);
+
+      // Mouse repulsion
+      var mdx = star.baseX - mouse.sx;
+      var mdy = star.baseY - mouse.sy;
+      var mDist = Math.sqrt(mdx * mdx * aspect * aspect + mdy * mdy);
+      var repelRadius = 0.15;
+      if (mDist < repelRadius && mDist > 0.001) {
+        var repelForce = (1.0 - mDist / repelRadius);
+        repelForce = repelForce * repelForce * 0.04;
+        star.dx += (mdx / mDist) * repelForce;
+        star.dy += (mdy / mDist) * repelForce;
+      }
+
+      // Spring back to base position
+      star.dx *= 0.92;
+      star.dy *= 0.92;
+
+      // Depth-based parallax from mouse offset
+      var parallax = star.depth * 0.008;
+      var px = (mouse.sx - 0.5) * parallax;
+      var py = (mouse.sy - 0.5) * parallax;
+
+      star.x = star.baseX + star.dx + px;
+      star.y = star.baseY + star.dy + py;
 
       var j = i * 5;
       starData[j] = star.x;
