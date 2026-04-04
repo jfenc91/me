@@ -763,13 +763,15 @@ body:has(.custom-cursor) .tech-tags span {
 
 .hero-char {
   display: inline-block;
-  opacity: 0;
-  transform: translateY(100%) rotateX(-80deg);
-  animation: charReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: charReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: bottom center;
 }
 
 @keyframes charReveal {
+  from {
+    opacity: 0;
+    transform: translateY(80%) rotateX(-60deg);
+  }
   to {
     opacity: 1;
     transform: translateY(0) rotateX(0);
@@ -805,12 +807,14 @@ body:has(.custom-cursor) .tech-tags span {
 
 /* --- Hero Tagline Reveal --- */
 .hero-tagline-reveal {
-  opacity: 0;
-  transform: translateY(20px);
-  animation: taglineReveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards 1s;
+  animation: taglineReveal 1s cubic-bezier(0.16, 1, 0.3, 1) both 1s;
 }
 
 @keyframes taglineReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
   to {
     opacity: 1;
     transform: translateY(0);
@@ -819,18 +823,16 @@ body:has(.custom-cursor) .tech-tags span {
 
 /* --- Section Title Reveal --- */
 
-/* --- Enhanced Card Reveal (clip-path slide) --- */
+/* --- Enhanced Card Reveal --- */
 .adventure-card.fade-up {
-  opacity: 0;
-  clip-path: inset(10% 10% 10% 10%);
-  transform: translateY(0);
+  transform: translateY(30px) scale(0.97);
   transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-              clip-path 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .adventure-card.fade-up.visible {
   opacity: 1;
-  clip-path: inset(0% 0% 0% 0%);
+  transform: translateY(0) scale(1);
 }
 
 /* --- Skill Card 3D Tilt --- */
@@ -851,12 +853,12 @@ body:has(.custom-cursor) .tech-tags span {
 }
 
 /* --- Tech tag stagger animation --- */
-.tech-tags span {
+.tech-stack.fade-up .tech-tags span {
   opacity: 0;
   transform: translateY(10px);
 }
 
-.tech-stack.visible .tech-tags span {
+.tech-stack.fade-up.visible .tech-tags span {
   opacity: 1;
   transform: translateY(0);
   transition: opacity 0.4s, transform 0.4s;
